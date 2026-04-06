@@ -46,7 +46,7 @@ mod tests {
 
     #[test]
     fn rs_underperforming() {
-        let stock = vec![100.0, 95.0, 90.0];  // -10%
+        let stock = vec![100.0, 95.0, 90.0]; // -10%
         let bench = vec![100.0, 105.0, 110.0]; // +10%
         let result = relative_strength(&stock, &bench, 3).unwrap();
         assert!(result < 1.0); // Stock lagged benchmark

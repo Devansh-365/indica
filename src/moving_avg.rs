@@ -18,9 +18,9 @@ pub fn ema(values: &[f64], period: usize) -> Option<f64> {
     }
     let k = 2.0 / (period as f64 + 1.0);
     let seed: f64 = values[..period].iter().sum::<f64>() / period as f64;
-    let result = values[period..].iter().fold(seed, |prev, &val| {
-        val * k + prev * (1.0 - k)
-    });
+    let result = values[period..]
+        .iter()
+        .fold(seed, |prev, &val| val * k + prev * (1.0 - k));
     Some(result)
 }
 

@@ -3,23 +3,23 @@
 //! Fast technical analysis indicators for stock markets.
 //! SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Pivot Points, and more.
 
-mod moving_avg;
-mod rsi;
-mod macd;
-mod bollinger;
 mod atr;
-mod pivot;
-mod volume;
-mod relative_strength;
-mod utils;
 pub mod batch;
+mod bollinger;
+mod macd;
+mod moving_avg;
 mod napi_bindings;
+mod pivot;
+mod relative_strength;
+mod rsi;
+mod utils;
+mod volume;
 
-pub use moving_avg::{sma, ema};
-pub use rsi::rsi;
-pub use macd::{macd, MacdResult, Crossover};
-pub use bollinger::{bollinger_bands, BollingerBandsResult};
 pub use atr::atr;
-pub use pivot::{pivot_points, PivotPointsResult};
-pub use volume::volume_trend;
+pub use bollinger::{BollingerBandsResult, bollinger_bands};
+pub use macd::{Crossover, MacdResult, macd};
+pub use moving_avg::{ema, sma};
+pub use pivot::{PivotPointsResult, pivot_points};
 pub use relative_strength::relative_strength;
+pub use rsi::rsi;
+pub use volume::volume_trend;

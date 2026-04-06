@@ -23,8 +23,7 @@ pub fn bollinger_bands(
     let slice = &closes[closes.len() - period..];
     let middle: f64 = slice.iter().sum::<f64>() / period as f64;
 
-    let variance: f64 =
-        slice.iter().map(|&v| (v - middle).powi(2)).sum::<f64>() / period as f64;
+    let variance: f64 = slice.iter().map(|&v| (v - middle).powi(2)).sum::<f64>() / period as f64;
     let std_dev = variance.sqrt();
 
     let upper = middle + std_dev_multiplier * std_dev;

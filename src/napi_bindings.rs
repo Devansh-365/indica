@@ -1,5 +1,5 @@
-use napi_derive::napi;
 use crate::batch::{StockData, batch_compute_parallel};
+use napi_derive::napi;
 
 // ── Simple indicator functions (for single stock use) ──
 
@@ -66,7 +66,11 @@ pub struct JsBollingerBands {
 }
 
 #[napi]
-pub fn calc_bollinger_bands(closes: Vec<f64>, period: u32, std_dev: f64) -> Option<JsBollingerBands> {
+pub fn calc_bollinger_bands(
+    closes: Vec<f64>,
+    period: u32,
+    std_dev: f64,
+) -> Option<JsBollingerBands> {
     crate::bollinger_bands(&closes, period as usize, std_dev).map(|r| JsBollingerBands {
         upper: r.upper,
         middle: r.middle,
@@ -90,9 +94,13 @@ pub struct JsPivotPoints {
 pub fn calc_pivot_points(high: f64, low: f64, close: f64) -> JsPivotPoints {
     let r = crate::pivot_points(high, low, close);
     JsPivotPoints {
-        r3: r.r3, r2: r.r2, r1: r.r1,
+        r3: r.r3,
+        r2: r.r2,
+        r1: r.r1,
         pivot: r.pivot,
-        s1: r.s1, s2: r.s2, s3: r.s3,
+        s1: r.s1,
+        s2: r.s2,
+        s3: r.s3,
     }
 }
 

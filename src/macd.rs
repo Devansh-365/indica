@@ -37,14 +37,14 @@ pub fn macd(
 
     // Seed fast EMA and advance it to slow_period point
     let mut ema_fast: f64 = closes[..fast_period].iter().sum::<f64>() / fast_period as f64;
-    for i in fast_period..slow_period {
-        ema_fast = closes[i] * k_fast + ema_fast * (1.0 - k_fast);
+    for &val in closes.iter().take(slow_period).skip(fast_period) {
+        ema_fast = val * k_fast + ema_fast * (1.0 - k_fast);
     }
 
     let mut macd_line = Vec::new();
-    for i in slow_period..closes.len() {
-        ema_fast = closes[i] * k_fast + ema_fast * (1.0 - k_fast);
-        ema_slow = closes[i] * k_slow + ema_slow * (1.0 - k_slow);
+    for &val in closes.iter().skip(slow_period) {
+        ema_fast = val * k_fast + ema_fast * (1.0 - k_fast);
+        ema_slow = val * k_slow + ema_slow * (1.0 - k_slow);
         macd_line.push(ema_fast - ema_slow);
     }
 
@@ -58,9 +58,9 @@ pub fn macd(
         macd_line[..signal_period].iter().sum::<f64>() / signal_period as f64;
 
     let mut prev_signal = signal_line;
-    for i in signal_period..macd_line.len() {
+    for &val in macd_line.iter().skip(signal_period) {
         prev_signal = signal_line;
-        signal_line = macd_line[i] * k_signal + signal_line * (1.0 - k_signal);
+        signal_line = val * k_signal + signal_line * (1.0 - k_signal);
     }
 
     let current_macd = *macd_line.last().unwrap();
