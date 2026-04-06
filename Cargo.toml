@@ -2,9 +2,15 @@
 name = "indica"
 version = "0.1.0"
 edition = "2024"
-description = "Fast technical analysis indicators for stock markets"
+description = "Fast technical analysis indicators for stock markets — SMA, EMA, RSI, MACD, Bollinger Bands, ATR, and more"
 license = "MIT"
 repository = "https://github.com/Devansh-365/indica"
+homepage = "https://github.com/Devansh-365/indica"
+documentation = "https://docs.rs/indica"
+readme = "README.md"
+keywords = ["trading", "technical-analysis", "indicators", "finance", "stocks"]
+categories = ["finance", "mathematics"]
+authors = ["Devansh Tiwari"]
 
 [lib]
 crate-type = ["cdylib", "lib"]
