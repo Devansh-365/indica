@@ -18,8 +18,10 @@
 //! use indica::{sma, rsi, supertrend};
 //! ```
 
+pub mod batch;
 pub mod core;
 pub mod indicators;
+pub mod signals;
 
 // ── Backward-compatible convenience re-exports ──
 
@@ -60,3 +62,14 @@ pub use indicators::trend::adx::Adx;
 pub use indicators::trend::ema::Ema;
 pub use indicators::trend::sma::Sma;
 pub use indicators::trend::supertrend::Supertrend;
+
+// Signals
+pub use signals::engine::{IndicatorValues, SignalEngine, SignalRule};
+pub use signals::presets::{momentum_trader, swing_trader};
+pub use signals::types::{Signal, SignalStrength, SignalVote};
+
+// Batch processing
+pub use batch::compute::{
+    IndicatorSnapshot, StockData, batch_compute, batch_compute_parallel, compute_snapshot,
+};
+pub use batch::screen::{ScreenFilter, ScreenResult, screen, screen_precomputed};
