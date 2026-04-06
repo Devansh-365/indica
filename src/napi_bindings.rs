@@ -43,18 +43,20 @@ pub struct JsMacdResult {
     pub crossover: String,
 }
 
+impl From<crate::MacdResult> for JsMacdResult {
+    fn from(r: crate::MacdResult) -> Self {
+        Self {
+            value: r.value,
+            signal: r.signal,
+            histogram: r.histogram,
+            crossover: r.crossover.to_string(),
+        }
+    }
+}
+
 #[napi]
 pub fn calc_macd(closes: Vec<f64>, fast: u32, slow: u32, signal: u32) -> Option<JsMacdResult> {
-    crate::macd(&closes, fast as usize, slow as usize, signal as usize).map(|r| JsMacdResult {
-        value: r.value,
-        signal: r.signal,
-        histogram: r.histogram,
-        crossover: match r.crossover {
-            crate::Crossover::Bullish => "bullish".to_string(),
-            crate::Crossover::Bearish => "bearish".to_string(),
-            crate::Crossover::None => "none".to_string(),
-        },
-    })
+    crate::macd(&closes, fast as usize, slow as usize, signal as usize).map(Into::into)
 }
 
 #[napi(object)]
@@ -65,18 +67,24 @@ pub struct JsBollingerBands {
     pub percent_b: f64,
 }
 
+impl From<crate::BollingerBandsResult> for JsBollingerBands {
+    fn from(r: crate::BollingerBandsResult) -> Self {
+        Self {
+            upper: r.upper,
+            middle: r.middle,
+            lower: r.lower,
+            percent_b: r.percent_b,
+        }
+    }
+}
+
 #[napi]
 pub fn calc_bollinger_bands(
     closes: Vec<f64>,
     period: u32,
     std_dev: f64,
 ) -> Option<JsBollingerBands> {
-    crate::bollinger_bands(&closes, period as usize, std_dev).map(|r| JsBollingerBands {
-        upper: r.upper,
-        middle: r.middle,
-        lower: r.lower,
-        percent_b: r.percent_b,
-    })
+    crate::bollinger_bands(&closes, period as usize, std_dev).map(Into::into)
 }
 
 #[napi(object)]
@@ -90,18 +98,23 @@ pub struct JsPivotPoints {
     pub s3: f64,
 }
 
+impl From<crate::PivotPointsResult> for JsPivotPoints {
+    fn from(r: crate::PivotPointsResult) -> Self {
+        Self {
+            r3: r.r3,
+            r2: r.r2,
+            r1: r.r1,
+            pivot: r.pivot,
+            s1: r.s1,
+            s2: r.s2,
+            s3: r.s3,
+        }
+    }
+}
+
 #[napi]
 pub fn calc_pivot_points(high: f64, low: f64, close: f64) -> JsPivotPoints {
-    let r = crate::pivot_points(high, low, close);
-    JsPivotPoints {
-        r3: r.r3,
-        r2: r.r2,
-        r1: r.r1,
-        pivot: r.pivot,
-        s1: r.s1,
-        s2: r.s2,
-        s3: r.s3,
-    }
+    crate::pivot_points(high, low, close).into()
 }
 
 // ── Batch processing (the main payoff) ──
@@ -151,22 +164,8 @@ pub fn batch_compute_indicators(stocks: Vec<JsStockData>) -> Vec<JsIndicatorSnap
             sma_200: snap.sma_200,
             ema_20: snap.ema_20,
             rsi_14: snap.rsi_14,
-            macd: snap.macd_result.map(|m| JsMacdResult {
-                value: m.value,
-                signal: m.signal,
-                histogram: m.histogram,
-                crossover: match m.crossover {
-                    crate::Crossover::Bullish => "bullish".to_string(),
-                    crate::Crossover::Bearish => "bearish".to_string(),
-                    crate::Crossover::None => "none".to_string(),
-                },
-            }),
-            bollinger: snap.bollinger.map(|b| JsBollingerBands {
-                upper: b.upper,
-                middle: b.middle,
-                lower: b.lower,
-                percent_b: b.percent_b,
-            }),
+            macd: snap.macd_result.map(Into::into),
+            bollinger: snap.bollinger.map(Into::into),
             atr_14: snap.atr_14,
             volume_trend: snap.volume_trend,
         })

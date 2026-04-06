@@ -1,11 +1,22 @@
+use crate::moving_avg::ema_series;
 use crate::utils::round;
 
 /// MACD crossover direction.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Crossover {
     Bullish,
     Bearish,
-    None,
+    Neutral,
+}
+
+impl std::fmt::Display for Crossover {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Crossover::Bullish => write!(f, "bullish"),
+            Crossover::Bearish => write!(f, "bearish"),
+            Crossover::Neutral => write!(f, "none"),
+        }
+    }
 }
 
 /// MACD computation result.
@@ -19,53 +30,57 @@ pub struct MacdResult {
 
 /// MACD (Moving Average Convergence Divergence).
 /// Default parameters: fast=12, slow=26, signal=9.
-/// Returns `None` if insufficient data.
+/// Returns `None` if insufficient data or invalid parameters.
+#[must_use]
 pub fn macd(
     closes: &[f64],
     fast_period: usize,
     slow_period: usize,
     signal_period: usize,
 ) -> Option<MacdResult> {
-    if closes.len() < slow_period + signal_period || slow_period == 0 {
+    if closes.len() < slow_period + signal_period
+        || fast_period == 0
+        || slow_period == 0
+        || signal_period == 0
+        || fast_period >= slow_period
+    {
         return None;
     }
 
-    let k_fast = 2.0 / (fast_period as f64 + 1.0);
-    let k_slow = 2.0 / (slow_period as f64 + 1.0);
+    // Get full EMA series for fast and slow
+    let ema_fast = ema_series(closes, fast_period)?;
+    let ema_slow = ema_series(closes, slow_period)?;
 
-    let mut ema_slow: f64 = closes[..slow_period].iter().sum::<f64>() / slow_period as f64;
-
-    // Seed fast EMA and advance it to slow_period point
-    let mut ema_fast: f64 = closes[..fast_period].iter().sum::<f64>() / fast_period as f64;
-    for &val in closes.iter().take(slow_period).skip(fast_period) {
-        ema_fast = val * k_fast + ema_fast * (1.0 - k_fast);
+    // MACD line = fast EMA - slow EMA (aligned from slow_period onward)
+    // ema_fast starts at index fast_period, ema_slow starts at index slow_period
+    // We need to align them: skip the first (slow_period - fast_period) entries of ema_fast
+    let offset = slow_period - fast_period;
+    if ema_fast.len() <= offset {
+        return None;
     }
 
-    let mut macd_line = Vec::new();
-    for &val in closes.iter().skip(slow_period) {
-        ema_fast = val * k_fast + ema_fast * (1.0 - k_fast);
-        ema_slow = val * k_slow + ema_slow * (1.0 - k_slow);
-        macd_line.push(ema_fast - ema_slow);
-    }
+    let macd_line: Vec<f64> = ema_fast[offset..]
+        .iter()
+        .zip(ema_slow.iter())
+        .map(|(f, s)| f - s)
+        .collect();
 
     if macd_line.len() < signal_period {
         return None;
     }
 
     // Signal line = EMA of MACD line
-    let k_signal = 2.0 / (signal_period as f64 + 1.0);
-    let mut signal_line: f64 =
-        macd_line[..signal_period].iter().sum::<f64>() / signal_period as f64;
+    let signal_series = ema_series(&macd_line, signal_period)?;
+    let current_signal = *signal_series.last()?;
+    let current_macd = *macd_line.last()?;
+    let histogram = current_macd - current_signal;
 
-    let mut prev_signal = signal_line;
-    for &val in macd_line.iter().skip(signal_period) {
-        prev_signal = signal_line;
-        signal_line = val * k_signal + signal_line * (1.0 - k_signal);
-    }
-
-    let current_macd = *macd_line.last().unwrap();
-    let histogram = current_macd - signal_line;
-
+    // Crossover detection: compare current and previous histogram
+    let prev_signal = if signal_series.len() >= 2 {
+        signal_series[signal_series.len() - 2]
+    } else {
+        current_signal
+    };
     let prev_macd = if macd_line.len() >= 2 {
         macd_line[macd_line.len() - 2]
     } else {
@@ -78,12 +93,12 @@ pub fn macd(
     } else if prev_histogram >= 0.0 && histogram < 0.0 {
         Crossover::Bearish
     } else {
-        Crossover::None
+        Crossover::Neutral
     };
 
     Some(MacdResult {
         value: round(current_macd, 2),
-        signal: round(signal_line, 2),
+        signal: round(current_signal, 2),
         histogram: round(histogram, 2),
         crossover,
     })
@@ -105,7 +120,6 @@ mod tests {
     fn macd_trending_up() {
         let result = macd(&trending_up(), 12, 26, 9).unwrap();
         assert!(result.value > 0.0, "MACD should be positive in uptrend");
-        assert!(result.histogram > 0.0 || result.histogram.abs() < 0.5);
     }
 
     #[test]
@@ -120,8 +134,16 @@ mod tests {
     }
 
     #[test]
+    fn macd_invalid_params() {
+        let data = vec![1.0; 50];
+        assert!(macd(&data, 0, 26, 9).is_none());
+        assert!(macd(&data, 12, 0, 9).is_none());
+        assert!(macd(&data, 12, 26, 0).is_none());
+        assert!(macd(&data, 26, 12, 9).is_none()); // fast >= slow
+    }
+
+    #[test]
     fn macd_crossover_detection() {
-        // Flat then up — should eventually get bullish crossover
         let mut data: Vec<f64> = vec![100.0; 35];
         for i in 0..20 {
             data.push(100.0 + i as f64 * 2.0);

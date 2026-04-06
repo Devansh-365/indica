@@ -1,8 +1,9 @@
-use crate::utils::round;
+use crate::utils::{round, wilders_smooth};
 
 /// Average True Range using Wilder's smoothing.
 /// Requires `period + 1` data points minimum.
 /// Returns `None` if insufficient data.
+#[must_use]
 pub fn atr(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) -> Option<f64> {
     let len = closes.len();
     if len < period + 1 || highs.len() < len || lows.len() < len || period == 0 {
@@ -24,14 +25,12 @@ pub fn atr(highs: &[f64], lows: &[f64], closes: &[f64], period: usize) -> Option
     }
 
     // Initial ATR = simple average of first `period` true ranges
-    let mut atr_value: f64 = true_ranges[..period].iter().sum::<f64>() / period as f64;
+    let seed: f64 = true_ranges[..period].iter().sum::<f64>() / period as f64;
 
-    // Wilder's smoothing
-    for &tr in &true_ranges[period..] {
-        atr_value = (atr_value * (period as f64 - 1.0) + tr) / period as f64;
-    }
+    // Wilder's smoothing for remaining true ranges
+    let smoothed = wilders_smooth(seed, &true_ranges[period..], period);
 
-    Some(round(atr_value, 2))
+    Some(round(smoothed, 2))
 }
 
 #[cfg(test)]
@@ -54,7 +53,7 @@ mod tests {
         ];
         let result = atr(&highs, &lows, &closes, 14).unwrap();
         assert!(result > 0.0);
-        assert!(result < 2.0); // Reasonable range for this data
+        assert!(result < 2.0);
     }
 
     #[test]
@@ -64,7 +63,6 @@ mod tests {
 
     #[test]
     fn atr_flat_market() {
-        // All same price = ATR near 0
         let data = vec![100.0; 20];
         let result = atr(&data, &data, &data, 14).unwrap();
         assert_eq!(result, 0.0);
