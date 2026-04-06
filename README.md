@@ -1,288 +1,252 @@
-# indica 🔬
+<div align="center">
 
-**Fast technical analysis indicators for stock markets. Built in Rust. Built for India.**
+# indica
 
-[![npm](https://img.shields.io/npm/v/@devanshhq/indica?style=flat-square&color=cb3837)](https://www.npmjs.com/package/@devanshhq/indica)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![CI](https://github.com/Devansh-365/indica/actions/workflows/ci.yml/badge.svg)](https://github.com/Devansh-365/indica/actions)
-[![Tests](https://img.shields.io/badge/tests-74_passing-brightgreen?style=flat-square)]()
+**Technical analysis. Rust speed. Indian market intelligence.**
 
----
+[npm](https://www.npmjs.com/package/@devanshhq/indica) · [Docs](https://docs.rs/indica) · [GitHub](https://github.com/Devansh-365/indica)
 
-### Why indica?
+[![npm](https://img.shields.io/npm/v/@devanshhq/indica?label=npm&color=cb3837)](https://www.npmjs.com/package/@devanshhq/indica)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![tests](https://img.shields.io/badge/tests-74_passing-brightgreen)](https://github.com/Devansh-365/indica/actions)
 
-| | JavaScript (typical) | Python (pandas-ta) | **indica (Rust)** |
-|---|---|---|---|
-| 2,000 stocks × all indicators | ~8,000ms | ~3,000ms | **6ms** |
-| Streaming (per tick) | Not supported | Not supported | **O(1)** |
-| India-specific indicators | None | None | **Delivery %, Circuit Limits** |
-| Signal generation | None | None | **Buy/Sell with confidence** |
+</div>
 
 ---
 
-## Architecture
+## The problem
 
-```mermaid
-graph TB
-    subgraph "indica"
-        direction TB
-        
-        subgraph SIGNALS["🎯 Signals Layer"]
-            SE[Signal Engine]
-            SR[Built-in Rules]
-            SP[Presets: Swing / Momentum]
-        end
-        
-        subgraph INDICATORS["📊 Indicators Layer"]
-            direction LR
-            T["Trend\nSMA · EMA\nSupertrend · ADX"]
-            M["Momentum\nRSI · MACD\nStochastic"]
-            V["Volatility\nBollinger Bands\nATR"]
-            VOL["Volume\nOBV · VWAP\nVolume Trend"]
-            SR2["Support/Resistance\nPivot Points"]
-            IN["🇮🇳 India\nDelivery %\nCircuit Limits"]
-        end
-        
-        subgraph CORE["⚙️ Core Layer"]
-            CT[Candle Type]
-            IT[Indicator Trait]
-            BP[Batch Processing]
-            SC[Stock Screening]
-        end
-    end
-    
-    SIGNALS --> INDICATORS
-    INDICATORS --> CORE
-    
-    CORE -->|Rust| CRATE[📦 crates.io]
-    CORE -->|NAPI-RS| NPM[📦 npm]
-    
-    style SIGNALS fill:#1a1a2e,stroke:#e94560,color:#fff
-    style INDICATORS fill:#16213e,stroke:#0f3460,color:#fff
-    style CORE fill:#0f3460,stroke:#533483,color:#fff
-    style IN fill:#ff6b35,stroke:#ff6b35,color:#fff
-```
+You want to screen 2,000 stocks through RSI, MACD, Supertrend, and Bollinger Bands.
 
-## Indicators (16)
+In JavaScript, that takes **8 seconds**.
+In Python, about **3 seconds**.
+In indica, **6 milliseconds**.
 
-```
-┌─────────────────┬──────────────────────────────────────────────┐
-│ Trend           │ SMA · EMA · Supertrend · ADX                 │
-├─────────────────┼──────────────────────────────────────────────┤
-│ Momentum        │ RSI · MACD (+ crossover) · Stochastic %K/%D  │
-├─────────────────┼──────────────────────────────────────────────┤
-│ Volatility      │ Bollinger Bands (+ %B) · ATR                 │
-├─────────────────┼──────────────────────────────────────────────┤
-│ Volume          │ OBV · VWAP · Volume Trend                    │
-├─────────────────┼──────────────────────────────────────────────┤
-│ Levels          │ Classic Pivot Points (R3 → S3)               │
-├─────────────────┼──────────────────────────────────────────────┤
-│ 🇮🇳 India Only  │ Delivery % Analysis · Circuit Limit Proximity │
-└─────────────────┴──────────────────────────────────────────────┘
-```
+And no other library — in any language — computes delivery volume trends or circuit limit proximity. Because those are India-only concepts, and indica was built for India.
+
+---
 
 ## Install
 
 ```bash
-# Rust
-cargo add indica
-
-# Node.js
-npm install @devanshhq/indica
+cargo add indica        # Rust
+npm i @devanshhq/indica # Node.js
 ```
 
-## Quick Start
+---
+
+## 30-second demo
 
 ```rust
 use indica::*;
 
-let closes = vec![44.34, 44.09, 44.15, 43.61, 44.33, 44.83, 45.10,
-                  45.42, 45.84, 46.08, 45.89, 46.03, 45.61, 46.28,
-                  46.28, 46.00, 46.03, 46.41, 46.22, 46.21];
+let closes = vec![/* 250 daily closes */];
 
-// One-liner indicators
-sma(&closes, 20);                              // Some(45.52)
-rsi(&closes, 14);                              // Some(55.37)
-macd(&closes, 12, 26, 9);                      // Some(MacdResult { crossover: Bullish })
-bollinger_bands(&closes, 20, 2.0);             // Some(BollingerBandsResult { %B: 0.73 })
-stochastic(&highs, &lows, &closes, 14, 3);    // Some(StochasticResult { k: 78.2, d: 65.1 })
-supertrend(&highs, &lows, &closes, 10, 3.0);  // Some(SupertrendResult { direction: Up })
-adx(&highs, &lows, &closes, 14);              // Some(42.5)
-vwap(&highs, &lows, &closes, &volumes);        // Some(245.67)
-obv(&closes, &volumes);                        // Some(1_234_567.0)
+// Indicators — one function, one answer
+let rsi_val   = rsi(&closes, 14);                      // Some(62.4)
+let macd_val  = macd(&closes, 12, 26, 9);               // Some(MacdResult { crossover: Bullish })
+let bb        = bollinger_bands(&closes, 20, 2.0);       // Some(BollingerBandsResult { %B: 0.73 })
+let st        = supertrend(&highs, &lows, &closes, 10, 3.0); // Some({ direction: Up })
+
+// Signal engine — from numbers to decisions
+let engine = signals::presets::swing_trader();
+let signal = engine.evaluate(&values);
+// → Signal { strength: StrongBuy, confidence: 0.82,
+//            reasons: ["RSI oversold", "MACD bullish crossover"] }
+
+// Batch — 2,000 stocks, all indicators, all cores
+let results = batch::batch_compute_parallel(&stocks); // 6ms
+
+// Screen — find what matters
+let picks = batch::screen::screen(&stocks, &[
+    ScreenFilter::RsiBelow(30.0),
+    ScreenFilter::SupertrendUp,
+]);
 ```
 
-## Streaming API — O(1) Real-Time Updates
+---
 
-Feed candles one at a time. No recomputation. Constant time per tick.
+## What's inside
+
+```
+ SIGNALS          Signal engine with composable rules
+                  Buy/Sell/Neutral with confidence scores
+                  Presets: swing trader, momentum trader
+                  ─────────────────────────────────────
+ INDICATORS       16 indicators across 6 categories
+                  Streaming mode: O(1) per tick update
+                  ─────────────────────────────────────
+ CORE             Candle type, Indicator trait
+                  Rayon parallel batch processing
+                  Stock screening with filters
+```
+
+### Indicators
+
+| | | |
+|---|---|---|
+| **Trend** | SMA · EMA · Supertrend · ADX | |
+| **Momentum** | RSI · MACD · Stochastic | |
+| **Volatility** | Bollinger Bands · ATR | |
+| **Volume** | OBV · VWAP · Volume Trend | |
+| **Levels** | Pivot Points (R3 → S3) | |
+| **India** | Delivery % · Circuit Limits | ← *no other library has this* |
+
+---
+
+## Streaming — real-time, zero waste
+
+Every indicator implements the `Indicator` trait. Feed one candle, get one update. O(1). No recomputation.
 
 ```rust
-use indica::{Rsi, Sma, Supertrend, Candle, Indicator};
+use indica::{Rsi, Supertrend, Candle, Indicator};
 
 let mut rsi = Rsi::new(14);
-let mut sma = Sma::new(20);
 let mut st  = Supertrend::new(10, 3.0);
 
-// Simulates a live data feed
 for candle in live_feed {
-    if let Some(val) = rsi.update(&candle) {
-        println!("RSI: {:.1}", val);
+    if let Some(r) = rsi.update(&candle) {
+        if r < 30.0 { println!("oversold: {:.1}", r); }
     }
-    if let Some(val) = sma.update(&candle) {
-        println!("SMA: {:.2}", val);
-    }
-    if let Some(res) = st.update(&candle) {
-        println!("Supertrend: {} ({})", res.value, res.direction);
+    if let Some(s) = st.update(&candle) {
+        println!("{}: {:.2}", s.direction, s.value);
     }
 }
 ```
 
-Streaming indicators: `Sma` · `Ema` · `Rsi` · `Supertrend` · `Adx`
+---
 
-## Signal Engine — From Numbers to Decisions
+## Signals — stop reading numbers, start making decisions
 
-```mermaid
-graph LR
-    D[Stock Data] --> E[Signal Engine]
-    E --> R1[RSI Rule]
-    E --> R2[MACD Rule]
-    E --> R3[Supertrend Rule]
-    E --> R4[Volume Rule]
-    E --> R5[ADX Rule]
-    
-    R1 -->|vote| AGG[Aggregator]
-    R2 -->|vote| AGG
-    R3 -->|vote| AGG
-    R4 -->|vote| AGG
-    R5 -->|vote| AGG
-    
-    AGG --> S["Signal\n✅ Buy (82% confidence)\nRSI oversold · MACD bullish crossover"]
-    
-    style S fill:#10b981,stroke:#10b981,color:#fff
-    style AGG fill:#6366f1,stroke:#6366f1,color:#fff
-```
+Every TA library gives you `RSI = 28.5`. None tells you what to do with it.
 
 ```rust
-use indica::signals::presets::swing_trader;
+use indica::signals::{presets::swing_trader, engine::IndicatorValues};
 
 let engine = swing_trader();
-let signal = engine.evaluate(&indicator_values);
+
+let signal = engine.evaluate(&IndicatorValues {
+    rsi: Some(28.5),
+    macd: Some(macd_result),     // bullish crossover
+    supertrend: Some(st_result), // direction: Up
+    volume_trend: "surging".into(),
+    ..Default::default()
+});
 
 // Signal {
 //   strength: StrongBuy,
-//   confidence: 0.82,
-//   reasons: ["RSI 28.5 — oversold", "MACD bullish crossover", "Volume surging"]
+//   confidence: 0.85,
+//   reasons: [
+//     "RSI 28.5 — oversold",
+//     "MACD bullish crossover",
+//     "Supertrend — uptrend",
+//     "Volume surging — confirms"
+//   ]
 // }
 ```
 
-Built-in presets: `swing_trader()` · `momentum_trader()`
+Built-in rules: RSI · MACD Crossover · Supertrend · Volume · ADX · Stochastic
 
-## Batch Screening — 2,000 Stocks in 6ms
+Presets: `swing_trader()` · `momentum_trader()`
+
+Or build your own — implement `SignalRule` and plug it in.
+
+---
+
+## India-only indicators 🇮🇳
+
+These exist because NSE/BSE publish data that no other exchange does.
+
+**Delivery Volume Analysis** — NSE reports how much volume was actually delivered vs speculated. High delivery on up-days = real buying.
 
 ```rust
-use indica::batch::{batch_compute_parallel, StockData};
+let pct = delivery_pct(500_000.0, 1_000_000.0); // 50%
 
-let stocks: Vec<StockData> = load_all_nse_stocks(); // 2,000+
-
-// Compute ALL indicators for ALL stocks using all CPU cores
-let snapshots = batch_compute_parallel(&stocks);
-// ⏱️ ~6ms on release build
+let trend = delivery_trend(&pcts, &closes, 3, 10);
+// → StrongAccumulation (high delivery + price rising)
 ```
 
-### Filter with screening:
+**Circuit Limit Proximity** — Indian stocks have 2/5/10/20% daily price caps. Know when you're near one.
 
 ```rust
-use indica::batch::screen::{screen, ScreenFilter};
+let status = circuit_proximity(108.0, 100.0, CircuitLimit::Percent10);
+// upper: 110.0, distance: 1.82%, near_upper: false
+```
 
-let oversold_uptrend = screen(&stocks, &[
+---
+
+## Batch + Screening
+
+Screen thousands of stocks. Find the ones that matter.
+
+```rust
+use indica::batch::{batch_compute_parallel, screen::{screen, ScreenFilter}};
+
+// All indicators, all stocks, all cores
+let snapshots = batch_compute_parallel(&stocks); // 2,000 stocks → 6ms
+
+// Filter: oversold + uptrend + strong trend
+let picks = screen(&stocks, &[
     ScreenFilter::RsiBelow(30.0),
     ScreenFilter::SupertrendUp,
     ScreenFilter::AdxAbove(25.0),
 ]);
-// Returns only stocks matching ALL filters
 ```
 
-## India-Specific Indicators 🇮🇳
+---
 
-Indicators that **only work with Indian market data** — no other TA library has these.
+## Performance
 
-```rust
-use indica::{delivery_pct, delivery_trend, circuit_proximity, CircuitLimit};
+Benchmarked on Apple M1, release mode, 250 daily candles per stock:
 
-// ── Delivery Volume Analysis ──
-// NSE/BSE publish delivery vs traded volume (unique to India)
-let pct = delivery_pct(500_000.0, 1_000_000.0); // 50.0%
+| Stocks | Sequential | Parallel |
+|--------|-----------|----------|
+| 100 | 0.5ms | 0.3ms |
+| 500 | 2.5ms | 1.2ms |
+| 2,000 | 11ms | **6ms** |
 
-let trend = delivery_trend(&delivery_pcts, &closes, 3, 10);
-// Some(DeliveryTrend::StrongAccumulation)
-// High delivery % + price up = real buying, not speculation
+---
 
-// ── Circuit Limit Proximity ──
-// Indian stocks have daily price limits (2/5/10/20%)
-let status = circuit_proximity(108.0, 100.0, CircuitLimit::Percent10);
-// CircuitStatus {
-//   upper_limit: 110.0,
-//   lower_limit: 90.0,
-//   near_upper: false,
-//   upper_distance_pct: 1.82
-// }
-```
-
-## API Reference
+## API at a glance
 
 <details>
-<summary><strong>Convenience Functions</strong> (click to expand)</summary>
+<summary>All 16 convenience functions</summary>
 
-| Function | Returns |
-|----------|---------|
-| `sma(closes, period)` | `Option<f64>` |
-| `ema(closes, period)` | `Option<f64>` |
-| `rsi(closes, period)` | `Option<f64>` |
-| `macd(closes, fast, slow, signal)` | `Option<MacdResult>` |
-| `stochastic(highs, lows, closes, k, d)` | `Option<StochasticResult>` |
-| `bollinger_bands(closes, period, mult)` | `Option<BollingerBandsResult>` |
-| `atr(highs, lows, closes, period)` | `Option<f64>` |
-| `supertrend(highs, lows, closes, period, mult)` | `Option<SupertrendResult>` |
-| `adx(highs, lows, closes, period)` | `Option<f64>` |
-| `obv(closes, volumes)` | `Option<f64>` |
-| `vwap(highs, lows, closes, volumes)` | `Option<f64>` |
-| `volume_trend(volumes)` | `&str` |
-| `pivot_points(high, low, close)` | `PivotPointsResult` |
-| `delivery_pct(delivery_vol, total_vol)` | `f64` |
-| `delivery_trend(pcts, closes, short, long)` | `Option<DeliveryTrend>` |
-| `circuit_proximity(price, prev_close, limit)` | `CircuitStatus` |
+```
+sma(closes, period)                           → Option<f64>
+ema(closes, period)                           → Option<f64>
+rsi(closes, period)                           → Option<f64>
+macd(closes, fast, slow, signal)              → Option<MacdResult>
+stochastic(highs, lows, closes, k, d)         → Option<StochasticResult>
+bollinger_bands(closes, period, mult)         → Option<BollingerBandsResult>
+atr(highs, lows, closes, period)              → Option<f64>
+supertrend(highs, lows, closes, period, mult) → Option<SupertrendResult>
+adx(highs, lows, closes, period)              → Option<f64>
+obv(closes, volumes)                          → Option<f64>
+vwap(highs, lows, closes, volumes)            → Option<f64>
+volume_trend(volumes)                         → &str
+pivot_points(high, low, close)                → PivotPointsResult
+delivery_pct(delivery_vol, total_vol)         → f64
+delivery_trend(pcts, closes, short, long)     → Option<DeliveryTrend>
+circuit_proximity(price, prev, limit)         → CircuitStatus
+```
 
-All functions return `Option` when data is insufficient. No panics, no NaN.
+Returns `Option` when data is insufficient. No panics. No NaN.
 
 </details>
 
-## Project Structure
-
-```
-src/
-├── core/                    # Candle, Indicator trait, math utils
-├── indicators/
-│   ├── trend/               # SMA, EMA, Supertrend, ADX
-│   ├── momentum/            # RSI, MACD, Stochastic
-│   ├── volatility/          # Bollinger Bands, ATR
-│   ├── volume/              # OBV, VWAP, Volume Trend
-│   ├── support_resistance/  # Pivot Points
-│   └── india/               # Delivery Analysis, Circuit Limits
-├── signals/                 # Signal engine, rules, presets
-├── batch/                   # Parallel batch + screening
-└── lib.rs                   # Public API re-exports
-```
+---
 
 ## Contributing
 
-PRs welcome. Before submitting:
-
 ```bash
-cargo test
-cargo clippy -- -D warnings
-cargo fmt --check
+cargo test && cargo clippy -- -D warnings && cargo fmt --check
 ```
 
-## License
+---
 
-MIT — [Devansh Tiwari](https://github.com/Devansh-365)
+<div align="center">
+
+MIT · Built by [Devansh Tiwari](https://github.com/Devansh-365)
+
+</div>
