@@ -93,8 +93,7 @@ mod tests {
         };
         let signal = engine.evaluate(&vals);
         assert!(
-            signal.strength == SignalStrength::Buy
-                || signal.strength == SignalStrength::StrongBuy
+            signal.strength == SignalStrength::Buy || signal.strength == SignalStrength::StrongBuy
         );
         assert!(signal.confidence > 0.0);
     }

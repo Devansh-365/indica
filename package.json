@@ -1,7 +1,7 @@
 {
   "name": "@devanshhq/indica",
-  "version": "0.1.0",
-  "description": "Fast technical analysis indicators for stock markets. Built in Rust.",
+  "version": "0.2.0",
+  "description": "Fast technical analysis indicators for Indian stock markets. 16 indicators, signal engine, batch screening.",
   "main": "index.js",
   "types": "index.d.ts",
   "repository": "https://github.com/Devansh-365/indica",

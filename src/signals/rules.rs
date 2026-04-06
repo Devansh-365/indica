@@ -11,15 +11,24 @@ impl SignalRule for RsiRule {
     fn evaluate(&self, snapshot: &IndicatorValues) -> Option<SignalVote> {
         let rsi = snapshot.rsi?;
         let (strength, reason) = if rsi < 20.0 {
-            (SignalStrength::StrongBuy, format!("RSI {rsi:.1} — deeply oversold"))
+            (
+                SignalStrength::StrongBuy,
+                format!("RSI {rsi:.1} — deeply oversold"),
+            )
         } else if rsi < 30.0 {
             (SignalStrength::Buy, format!("RSI {rsi:.1} — oversold"))
         } else if rsi > 80.0 {
-            (SignalStrength::StrongSell, format!("RSI {rsi:.1} — deeply overbought"))
+            (
+                SignalStrength::StrongSell,
+                format!("RSI {rsi:.1} — deeply overbought"),
+            )
         } else if rsi > 70.0 {
             (SignalStrength::Sell, format!("RSI {rsi:.1} — overbought"))
         } else {
-            (SignalStrength::Neutral, format!("RSI {rsi:.1} — neutral zone"))
+            (
+                SignalStrength::Neutral,
+                format!("RSI {rsi:.1} — neutral zone"),
+            )
         };
         Some(SignalVote {
             strength,
@@ -115,10 +124,7 @@ impl SignalRule for VolumeTrendRule {
                 SignalStrength::StrongSell,
                 "Volume drying up — caution".to_string(),
             ),
-            "stable" => (
-                SignalStrength::Neutral,
-                "Volume stable".to_string(),
-            ),
+            "stable" => (SignalStrength::Neutral, "Volume stable".to_string()),
             _ => return None,
         };
         Some(SignalVote {
@@ -173,7 +179,10 @@ impl SignalRule for StochasticRule {
         let (strength, reason) = if stoch.k < 20.0 && stoch.d < 20.0 {
             (
                 SignalStrength::StrongBuy,
-                format!("Stochastic K={:.1} D={:.1} — deeply oversold", stoch.k, stoch.d),
+                format!(
+                    "Stochastic K={:.1} D={:.1} — deeply oversold",
+                    stoch.k, stoch.d
+                ),
             )
         } else if stoch.k < 30.0 {
             (
@@ -183,7 +192,10 @@ impl SignalRule for StochasticRule {
         } else if stoch.k > 80.0 && stoch.d > 80.0 {
             (
                 SignalStrength::StrongSell,
-                format!("Stochastic K={:.1} D={:.1} — deeply overbought", stoch.k, stoch.d),
+                format!(
+                    "Stochastic K={:.1} D={:.1} — deeply overbought",
+                    stoch.k, stoch.d
+                ),
             )
         } else if stoch.k > 70.0 {
             (

@@ -1,8 +1,8 @@
 [package]
 name = "indica"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
-description = "Fast technical analysis indicators for stock markets — SMA, EMA, RSI, MACD, Bollinger Bands, ATR, and more"
+description = "Fast technical analysis indicators for Indian stock markets — 16 indicators, signal engine, batch screening, streaming API"
 license = "MIT"
 repository = "https://github.com/Devansh-365/indica"
 homepage = "https://github.com/Devansh-365/indica"

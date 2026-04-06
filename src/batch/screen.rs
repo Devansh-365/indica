@@ -22,12 +22,8 @@ pub struct ScreenResult {
 
 fn matches_filter(snap: &IndicatorSnapshot, filter: &ScreenFilter, data: &StockData) -> bool {
     match filter {
-        ScreenFilter::RsiBelow(threshold) => snap
-            .rsi_14
-            .is_some_and(|rsi| rsi < *threshold),
-        ScreenFilter::RsiAbove(threshold) => snap
-            .rsi_14
-            .is_some_and(|rsi| rsi > *threshold),
+        ScreenFilter::RsiBelow(threshold) => snap.rsi_14.is_some_and(|rsi| rsi < *threshold),
+        ScreenFilter::RsiAbove(threshold) => snap.rsi_14.is_some_and(|rsi| rsi > *threshold),
         ScreenFilter::SupertrendUp => snap
             .supertrend
             .as_ref()
@@ -36,13 +32,12 @@ fn matches_filter(snap: &IndicatorSnapshot, filter: &ScreenFilter, data: &StockD
             .supertrend
             .as_ref()
             .is_some_and(|st| st.direction == SupertrendDirection::Down),
-        ScreenFilter::AdxAbove(threshold) => snap
-            .adx_14
-            .is_some_and(|adx_val| adx_val > *threshold),
-        ScreenFilter::VolumeAbove(threshold) => data
-            .volumes
-            .last()
-            .is_some_and(|&vol| vol > *threshold),
+        ScreenFilter::AdxAbove(threshold) => {
+            snap.adx_14.is_some_and(|adx_val| adx_val > *threshold)
+        }
+        ScreenFilter::VolumeAbove(threshold) => {
+            data.volumes.last().is_some_and(|&vol| vol > *threshold)
+        }
     }
 }
 
@@ -52,9 +47,7 @@ pub fn screen(stocks: &[StockData], filters: &[ScreenFilter]) -> Vec<ScreenResul
         .iter()
         .filter_map(|data| {
             let snapshot = compute_snapshot(data);
-            let passes = filters
-                .iter()
-                .all(|f| matches_filter(&snapshot, f, data));
+            let passes = filters.iter().all(|f| matches_filter(&snapshot, f, data));
             if passes {
                 Some(ScreenResult {
                     symbol: data.symbol.clone(),
@@ -75,9 +68,7 @@ pub fn screen_precomputed(
     snapshots
         .iter()
         .filter_map(|(data, snapshot)| {
-            let passes = filters
-                .iter()
-                .all(|f| matches_filter(snapshot, f, data));
+            let passes = filters.iter().all(|f| matches_filter(snapshot, f, data));
             if passes {
                 Some(ScreenResult {
                     symbol: data.symbol.clone(),
@@ -144,8 +135,8 @@ mod tests {
     #[test]
     fn screen_volume_above() {
         let stocks = vec![
-            make_uptrend_stock("RELIANCE"),   // 2M volume
-            make_downtrend_stock("YESBANK"),  // 500K volume
+            make_uptrend_stock("RELIANCE"),  // 2M volume
+            make_downtrend_stock("YESBANK"), // 500K volume
         ];
         let results = screen(&stocks, &[ScreenFilter::VolumeAbove(1_000_000.0)]);
         assert_eq!(results.len(), 1);
@@ -171,10 +162,7 @@ mod tests {
 
     #[test]
     fn screen_empty_filters_returns_all() {
-        let stocks = vec![
-            make_uptrend_stock("A"),
-            make_downtrend_stock("B"),
-        ];
+        let stocks = vec![make_uptrend_stock("A"), make_downtrend_stock("B")];
         let results = screen(&stocks, &[]);
         assert_eq!(results.len(), 2);
     }
