@@ -1,16 +1,23 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! # indica
+//!
+//! Fast technical analysis indicators for stock markets.
+//! SMA, EMA, RSI, MACD, Bollinger Bands, ATR, Pivot Points, and more.
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod moving_avg;
+mod rsi;
+mod macd;
+mod bollinger;
+mod atr;
+mod pivot;
+mod volume;
+mod relative_strength;
+mod utils;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-        println!("result: {}", result);
-        println!("hello world!");
-    }
-}
+pub use moving_avg::{sma, ema};
+pub use rsi::rsi;
+pub use macd::{macd, MacdResult, Crossover};
+pub use bollinger::{bollinger_bands, BollingerBandsResult};
+pub use atr::atr;
+pub use pivot::{pivot_points, PivotPointsResult};
+pub use volume::volume_trend;
+pub use relative_strength::relative_strength;
