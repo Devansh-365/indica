@@ -1,5 +1,5 @@
 {
-  "name": "indica",
+  "name": "@devanshhq/indica",
   "version": "0.1.0",
   "description": "Fast technical analysis indicators for stock markets. Built in Rust.",
   "main": "index.js",

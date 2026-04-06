@@ -1,1 +1,18 @@
+# Rust build artifacts
 /target
+
+# Node.js
+node_modules/
+*.node
+index.js
+index.d.ts
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.iml
