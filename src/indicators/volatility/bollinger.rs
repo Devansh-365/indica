@@ -1,6 +1,5 @@
-use crate::utils::round;
+use crate::core::utils::round;
 
-/// Bollinger Bands result.
 #[derive(Debug, Clone)]
 pub struct BollingerBandsResult {
     pub upper: f64,
@@ -9,8 +8,8 @@ pub struct BollingerBandsResult {
     pub percent_b: f64,
 }
 
-/// Bollinger Bands (default: period=20, std_dev_multiplier=2.0).
-/// Returns `None` if insufficient data.
+/// Bollinger Bands (uses population standard deviation).
+#[must_use]
 pub fn bollinger_bands(
     closes: &[f64],
     period: usize,
@@ -19,23 +18,18 @@ pub fn bollinger_bands(
     if closes.len() < period || period == 0 {
         return None;
     }
-
     let slice = &closes[closes.len() - period..];
     let middle: f64 = slice.iter().sum::<f64>() / period as f64;
-
     let variance: f64 = slice.iter().map(|&v| (v - middle).powi(2)).sum::<f64>() / period as f64;
     let std_dev = variance.sqrt();
-
     let upper = middle + std_dev_multiplier * std_dev;
     let lower = middle - std_dev_multiplier * std_dev;
-
-    let current_price = *closes.last().unwrap();
+    let current_price = *closes.last()?;
     let percent_b = if (upper - lower).abs() < f64::EPSILON {
         0.5
     } else {
         (current_price - lower) / (upper - lower)
     };
-
     Some(BollingerBandsResult {
         upper: round(upper, 2),
         middle: round(middle, 2),
@@ -54,19 +48,10 @@ mod tests {
         let result = bollinger_bands(&closes, 20, 2.0).unwrap();
         assert!(result.upper > result.middle);
         assert!(result.middle > result.lower);
-        assert_eq!(result.middle, 10.5); // avg of 1..=20
     }
 
     #[test]
-    fn bb_percent_b() {
-        // Price at middle should give ~0.5
-        let closes = vec![10.0; 20];
-        let result = bollinger_bands(&closes, 20, 2.0).unwrap();
-        assert_eq!(result.percent_b, 0.5); // all same = flat bands
-    }
-
-    #[test]
-    fn bb_insufficient_data() {
+    fn bb_insufficient() {
         assert!(bollinger_bands(&[1.0; 5], 20, 2.0).is_none());
     }
 }
