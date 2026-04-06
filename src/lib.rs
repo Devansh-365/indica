@@ -12,6 +12,8 @@ mod pivot;
 mod volume;
 mod relative_strength;
 mod utils;
+pub mod batch;
+mod napi_bindings;
 
 pub use moving_avg::{sma, ema};
 pub use rsi::rsi;

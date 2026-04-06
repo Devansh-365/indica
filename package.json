@@ -1,0 +1,23 @@
+{
+  "name": "indica",
+  "version": "0.1.0",
+  "description": "Fast technical analysis indicators for stock markets. Built in Rust.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": "https://github.com/Devansh-365/indica",
+  "license": "MIT",
+  "keywords": ["trading", "technical-analysis", "indicators", "rust", "napi", "stocks", "nse"],
+  "napi": {
+    "name": "indica",
+    "triples": {
+      "defaults": true
+    }
+  },
+  "scripts": {
+    "build": "napi build --release",
+    "build:debug": "napi build"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  }
+}
